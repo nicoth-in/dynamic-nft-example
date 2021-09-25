@@ -33,7 +33,7 @@ function MetadataFind(props: { onMetadata: (metadata: any) => void }) {
       .then(async (result: string) => {
         const tokenURI = result.replace(/^ipfs:\/\/?/, "");
         const contents = await fetch(
-          `https://${tokenURI}.ipfs.dweb.link/`
+          `https://ipfs.io/${tokenURI}`
         ).then((r) => r.json());
         props.onMetadata(contents);
       })

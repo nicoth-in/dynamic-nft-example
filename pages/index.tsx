@@ -60,11 +60,11 @@ export default function HomePage() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Ceramic Starter</title>
+        <title>Trade your Options</title>
         <meta name="description" content="Ceramic Starter App" />
       </Head>
       <main className={styles.main}>
-        <div className={styles.logo}>🔸🌱</div>
+        <div className={styles.logo}>Option trade</div>
         <SignInWithCeramic>
           <div className={"text-center w-full"}>
             <hr />

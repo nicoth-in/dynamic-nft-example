@@ -239,7 +239,8 @@ export function MintNft(props: {
   const metadata = {
     name: props.tile.content.name,
     description: props.tile.content.description,
-    image: `ipfs://${props.tile.content.image}`,
+    subTokenId: props.tile.content.tokenId,
+    subTokenontract: props.tile.content.contract,
     ceramicContent: `ceramic://${props.tile.id.toString()}`,
   };
 

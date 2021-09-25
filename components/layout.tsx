@@ -11,7 +11,7 @@ export function Layout(props: React.PropsWithChildren<{}>) {
     <div className={styles.layoutContainer}>
       <nav className={styles.topMenuLine}>
         <Link href={"/"} passHref={true}>
-          <a className={"text-4xl"}>🔸🌱</a>
+          <a className={"text-4xl"}>Ceramic Option</a>
         </Link>
         <ul className={styles.topMenu}>
           <li>

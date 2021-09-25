@@ -9,46 +9,50 @@ export function CreateStream(props: {
   const ceramic = useCeramic();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | undefined>(undefined);
+  const [contract, setContract] = useState("");
+  const [tokenId, setTokenId] = useState("");
   const [progress, setProgress] = useState(false);
   const [streamId, setStreamId] = useState("");
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+
     e.preventDefault();
     setProgress(true);
+
     if (!name) {
       setProgress(false);
       alert("Add name");
     }
+
     if (!description) {
       setProgress(false);
       alert("Add description");
     }
-    if (!file) {
+
+    if (!tokenId) {
       setProgress(false);
-      alert("Add file");
+      alert("Add token ID");
     }
-    const formData = new FormData();
-    formData.set("file", file!);
-    fetch("/api/persist", { method: "POST", body: formData })
-      .then((r) => r.json())
-      .then(async (c) => {
-        const cid = c.cid;
-        // @ts-ignore
-        const tile = await TileDocument.create(ceramic.client, {
-          name: name,
-          description: description,
-          image: cid,
-        });
-        setStreamId(tile.id.toString());
-        props.onCreate(tile);
-      })
-      .catch((error) => {
-        console.error(error);
-      })
-      .finally(() => {
-        setProgress(false);
-      });
+
+    if (!contract) {
+      setProgress(false);
+      alert("Add contract");
+    }
+
+
+    TileDocument.create(ceramic.client, {
+      name: name,
+      description: description,
+      tokenId: tokenId,
+      contract: contract,
+    }).then(tile => {
+      setProgress(false);
+      setStreamId(tile.id.toString());
+      props.onCreate(tile);
+    })
+
+    
+
   };
 
   const renderStreamId = () => {
@@ -76,7 +80,7 @@ export function CreateStream(props: {
 
   return (
     <>
-      <h1>1. Create Ceramic stream</h1>
+      <h1>Create option bundle</h1>
       <form onSubmit={handleSubmit} className={formClassName}>
         <div className={styles.inputGroup}>
           <label htmlFor="token-name" className={styles.inputTextLabel}>
@@ -105,19 +109,37 @@ export function CreateStream(props: {
             onChange={(event) => setDescription(event.currentTarget.value)}
           />
         </div>
-        <div className={`${styles.inputGroup} mb-3`}>
-          <label htmlFor="token-image" className={styles.inputTextLabel}>
-            Initial Image
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="token-contract" className={styles.inputTextLabel}>
+            Contract
           </label>
           <input
+            type="text"
             disabled={progress}
-            type="file"
-            name="token-image"
-            id="token-image"
-            onChange={(event) => setFile(event.currentTarget.files?.[0])}
+            name="token-contract"
+            id="token-contract"
+            value={contract}
+            placeholder="0x1234567.."
+            onChange={(event) => setContract(event.currentTarget.value)}
           />
         </div>
 
+        <div className={styles.inputGroup}>
+          <label htmlFor="token-token-id" className={styles.inputTextLabel}>
+            Token ID
+          </label>
+          <input
+            type="text"
+            disabled={progress}
+            name="token-token-id"
+            id="token-token-id"
+            value={tokenId}
+            placeholder="123"
+            onChange={(event) => setTokenId(event.currentTarget.value)}
+          />
+        </div>
+        <hr />
         <button type={"submit"} disabled={progress}>
           Create stream
         </button>

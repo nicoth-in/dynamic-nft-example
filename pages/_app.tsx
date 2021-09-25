@@ -7,7 +7,7 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { EthereumAuthProvider } from "@ceramicnetwork/blockchain-utils-linking";
 
 const web3Service = new Web3Service({
-  network: "rinkeby",
+  network: "ropsten",
   cacheProvider: false,
   providerOptions: {
     injected: {
