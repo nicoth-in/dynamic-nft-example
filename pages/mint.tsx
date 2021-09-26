@@ -6,6 +6,8 @@ import { MintNft } from "../components/mint/mint-nft";
 import { useState } from "react";
 import { ChangeController } from "../components/mint/change-controller";
 
+
+
 export default function MintPage() {
   const [tile, setTile] = useState<TileDocument | undefined>(undefined);
   const [token, setToken] = useState<

@@ -10,6 +10,8 @@ import { useCeramic } from "use-ceramic";
 import { StreamID } from "@ceramicnetwork/streamid";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
 
+import { useRaribleTokens } from "../components/rarible-api";
+
 function MetadataFind(props: { onMetadata: (metadata: any) => void }) {
   const [progress, setProgress] = useState(false);
   const [contractAddress, setContractAddress] = useState("");
@@ -17,6 +19,8 @@ function MetadataFind(props: { onMetadata: (metadata: any) => void }) {
 
   const web3 = useWeb3();
   // const contractAddress = "0x6ede7f3c26975aad32a475e1021d8f6f39c89d82"; // rinkeby
+
+
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -253,6 +257,10 @@ function CeramicContent(props: { streamId: string }) {
 export default function View() {
   const [metadata, setMetadata] = useState<any | undefined>(undefined);
 
+
+  const { tokensAvailable } = useRaribleTokens();
+  
+  
   const handleMetadata = (metadata: any) => {
     setMetadata(metadata);
   };

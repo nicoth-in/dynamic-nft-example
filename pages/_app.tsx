@@ -36,6 +36,9 @@ ceramicService.connect = async () => {
   return new EthereumAuthProvider(provider, accounts[0]);
 };
 
+
+
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Web3Provider service={web3Service}>

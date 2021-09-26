@@ -1,7 +1,9 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import { useCeramic } from "use-ceramic";
 import styles from "../../styles/mint.module.css";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
+import { useWeb3 } from "../use-web3";
+import { useRaribleTokens } from "../rarible-api";
 
 export function CreateStream(props: {
   onCreate: (tile: TileDocument) => void;
@@ -9,10 +11,14 @@ export function CreateStream(props: {
   const ceramic = useCeramic();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [contract, setContract] = useState("");
+  const [contract, setContract] = useState({contract: "", tokenId: ""});
   const [tokenId, setTokenId] = useState("");
   const [progress, setProgress] = useState(false);
   const [streamId, setStreamId] = useState("");
+
+  const { tokensAvailable } = useRaribleTokens();
+
+  const web3 = useWeb3();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 
@@ -22,29 +28,26 @@ export function CreateStream(props: {
     if (!name) {
       setProgress(false);
       alert("Add name");
+      return;
     }
 
     if (!description) {
       setProgress(false);
       alert("Add description");
-    }
-
-    if (!tokenId) {
-      setProgress(false);
-      alert("Add token ID");
+      return;
     }
 
     if (!contract) {
       setProgress(false);
       alert("Add contract");
+      return;
     }
-
 
     TileDocument.create(ceramic.client, {
       name: name,
       description: description,
-      tokenId: tokenId,
-      contract: contract,
+      tokenId: contract.tokenId,
+      contract: contract.contract,
     }).then(tile => {
       setProgress(false);
       setStreamId(tile.id.toString());
@@ -114,18 +117,26 @@ export function CreateStream(props: {
           <label htmlFor="token-contract" className={styles.inputTextLabel}>
             Contract
           </label>
-          <input
+          {/* <input
             type="text"
             disabled={progress}
             name="token-contract"
             id="token-contract"
             value={contract}
             placeholder="0x1234567.."
-            onChange={(event) => setContract(event.currentTarget.value)}
-          />
+            
+          /> */}
+          <select
+            name="token-contract"
+            id="token-contract"
+            disabled={progress}
+            onChange={(event) => setContract(tokensAvailable[+event.currentTarget.value])}
+          >
+            {tokensAvailable.map((t: any, i) => (<option value={i} key={t.contract}>{t.meta.name} - {t.id}</option>))}
+          </select>
         </div>
 
-        <div className={styles.inputGroup}>
+        {/* <div className={styles.inputGroup}>
           <label htmlFor="token-token-id" className={styles.inputTextLabel}>
             Token ID
           </label>
@@ -138,7 +149,7 @@ export function CreateStream(props: {
             placeholder="123"
             onChange={(event) => setTokenId(event.currentTarget.value)}
           />
-        </div>
+        </div> */}
         <hr />
         <button type={"submit"} disabled={progress}>
           Create stream
