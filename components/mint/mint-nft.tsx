@@ -6,6 +6,7 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import styles from "../../styles/mint.module.css";
 import * as ethers from "ethers";
 import { RaribleContractArtifact } from "./rarible-contract-artifact";
+import { ContractArtifact } from "./smart-contract";
 import * as uint8arrays from "uint8arrays";
 import BigNumber from "bignumber.js";
 
@@ -94,83 +95,113 @@ function MintToken(props: {
   // const contractAddress = "0x6ede7f3c26975aad32a475e1021d8f6f39c89d82"; // rinkeby
   const chainId = web3.chainId.toString();
   // @ts-ignore
-  const contractAddress = RaribleContractArtifact.networks[chainId].address;
+  const contractAddress = "0xA1dD0141aE700F5444a1711081f136AAB7238c97";
   if (!contractAddress) {
     return <p>No Rarible contract found for chainId {chainId}</p>;
   }
   const minter = web3.account;
-  const tokenIdEndpoint = `https://api-dev.rarible.com/protocol/v0.1/ethereum/nft/collections/${contractAddress}/generate_token_id?minter=${minter}`;
 
-  function packedTokenId(tokenId: number) {
-    const minterBytes = uint8arrays.fromString(
-      minter.toLowerCase().replace("0x", ""),
-      "base16"
+  // var safemathContract = new web3.web3.eth.Contract([]);
+  // var safemath = safemathContract.deploy({
+  //   data: '0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220b1e2477b453b1e9203360d22dac66f60d63f8fa3b247a565e4be39f4a36d365f64736f6c63430008060033',
+  //   arguments: [
+  // ]
+  // }).send({
+  //   from: web3.account,
+  //   gas: 4700000
+  // }, function (e, contract){
+  //   console.log(e, contract);
+  // });
+
+  // return;
+  //const tokenIdEndpoint = `https://api-dev.rarible.com/protocol/v0.1/ethereum/nft/collections/${contractAddress}/generate_token_id?minter=${minter}`;
+
+  const mintHandler = async () => {
+    function packedTokenId(tokenId: number) {
+      const minterBytes = uint8arrays.fromString(
+        minter.toLowerCase().replace("0x", ""),
+        "base16"
+      );
+      const tokenHex = tokenId.toString(16);
+      const paddedTokenHex = tokenHex.length % 2 == 0 ? tokenHex : `0${tokenHex}`;
+      const tokenBytes = uint8arrays.fromString(paddedTokenHex, "base16");
+      const fullLength = 32; // uin256 in bytes
+      const paddingLength =
+        fullLength - tokenBytes.byteLength - minterBytes.byteLength;
+      const padding = new Uint8Array(paddingLength);
+      const resultingBytes = uint8arrays.concat([
+        minterBytes,
+        padding,
+        tokenBytes,
+      ]);
+      return "0x" + uint8arrays.toString(resultingBytes, "base16");
+    }
+
+
+    // const mintResult = await rarible.nft.mint({
+    //   lazy: false,
+    //   collection: {
+    //     id: contractAddress,
+    //     type: "ERC721",
+    //     supportsLazyMint: false,
+    //   },
+    //   uri: props.metadataCid,
+    //   creators: [{ account: toAddress(minter), value: 10000 }],
+    //   royalties: [{ account: toAddress(minter), value: 1000 }],
+    // });
+    // console.log('m', mintResult)
+    const provider = new ethers.providers.Web3Provider(web3.provider);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(
+      contractAddress,
+      ContractArtifact.abi,
+      signer
     );
-    const tokenHex = tokenId.toString(16);
-    const paddedTokenHex = tokenHex.length % 2 == 0 ? tokenHex : `0${tokenHex}`;
-    const tokenBytes = uint8arrays.fromString(paddedTokenHex, "base16");
-    const fullLength = 32; // uin256 in bytes
-    const paddingLength =
-      fullLength - tokenBytes.byteLength - minterBytes.byteLength;
-    const padding = new Uint8Array(paddingLength);
-    const resultingBytes = uint8arrays.concat([
-      minterBytes,
-      padding,
-      tokenBytes,
-    ]);
-    return "0x" + uint8arrays.toString(resultingBytes, "base16");
-  }
+    const uri = props.metadataCid;
+    const tokenId = packedTokenId(Math.round(Math.random() * 1000) as number);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setProgress(true);
-    fetch(tokenIdEndpoint)
-      .then((r) => r.json())
-      .then(async (tokenIdResponse) => {
-        // const mintResult = await rarible.nft.mint({
-        //   lazy: false,
-        //   collection: {
-        //     id: contractAddress,
-        //     type: "ERC721",
-        //     supportsLazyMint: false,
-        //   },
-        //   uri: props.metadataCid,
-        //   creators: [{ account: toAddress(minter), value: 10000 }],
-        //   royalties: [{ account: toAddress(minter), value: 1000 }],
-        // });
-        // console.log('m', mintResult)
-        const provider = new ethers.providers.Web3Provider(web3.provider);
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(
-          contractAddress,
-          RaribleContractArtifact.abi,
-          signer
-        );
-        const uri = props.metadataCid;
-        const tokenId = packedTokenId(tokenIdResponse.tokenId as number);
-        const tx = await contract.mintAndTransfer(
-          [
-            tokenId,
-            uri,
-            [[minter, 10000]], // You can assign one or add multiple creators, but the value must total 10000
-            [[minter, 1000]], // Royalties are set as basis point, so 1000 = 10%.
-            ["0x"],
-          ],
-          minter
-        );
-        const receipt = await tx.wait();
-        const decimalTokenId = new BigNumber(tokenId).toString(10);
-        setTxToken({
-          tokenId: decimalTokenId,
-          txid: receipt.transactionHash,
-          contract: contract.address,
-        });
-        props.onTokenId(contract.address, decimalTokenId);
-      })
-      .finally(() => {
-        setProgress(false);
-      });
+    console.log(contract);
+    
+    const tx = await contract.methods.transferFrom(
+      0,
+      {
+        tokens: [],
+        token_addr: contractAddress,
+        price: 10000,
+        token_price: [],
+        numTokens: 0,
+        eDateEnd: "",
+        buyer: minter,
+        owner: minter,
+      },
+      1,
+      "my token",
+      "ntd",
+      // [
+      //   tokenId,
+      //   uri,
+      //   [[minter, 10000]], // You can assign one or add multiple creators, but the value must total 10000
+      //   [[minter, 1000]], // Royalties are set as basis point, so 1000 = 10%.
+      //   ["0x"],
+      // ],
+      // minter
+    ).call();
+    const receipt = await tx.wait();
+    const decimalTokenId = new BigNumber(tokenId).toString(10);
+    setTxToken({
+      tokenId: decimalTokenId,
+      txid: receipt.transactionHash,
+      contract: contract.address,
+    });
+    props.onTokenId(contract.address, decimalTokenId);
+
+    setProgress(false);
+
   };
+
+  const handleSubmit = () => {
+    mintHandler().then(_ => {})
+  }
 
   if (!props.metadataCid) {
     return <></>;
